@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "My First Extension",
+  "version": "1.0",
+  "description": "A basic Firefox extension",
+    "browser_specific_settings": {
+  "gecko": {
+    "id": "borderify@example.com"
+  }
+},
+  "permissions": ["storage", "tabs", "activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+    "48": "icons/border-48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://urmcsand.service-now.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ]
+}

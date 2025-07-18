@@ -1,0 +1,19 @@
+.container {
+    position: fixed;
+    display: flex;
+
+    bottom: 10px;
+    left: 50%;
+    z-index: 999;
+    width: 100vh;
+    transform: translateX(-50%);
+    backdrop-filter: blur(10px);
+    height: 150px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 20px;
+}
+
+*::after {
+    background: rgba(0,0,0,0.3) !important;
+    box-shadow: none !important;
+}
