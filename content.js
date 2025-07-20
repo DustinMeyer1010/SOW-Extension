@@ -1,155 +1,164 @@
 console.log("This runs in every page!");
 document.body.style.border = "5px solid blue";
 
+var transferedInteraction = []
 
-const mainContainer = document.createElement("div")
-mainContainer.classList = "container"
+stateValue = 0
 
+const observer = new MutationObserver(() => {
+  console.log(window.location.href, stateValue, transferedInteraction)
+  if (window.location.href.includes("interaction/-1")){
+    setTimeout(() => {
+      const allInputs = findAllItemsIncludingShadowRoots(document, "INPUT", "", "");
 
-const input = document.createElement("input")
-input.id = "ignore"
+      allInputs.forEach(item => {
+        if (item.name.includes("assigned_to_input")) {
+          item.value = "32953114"
+        }
+        if (item.name.includes("u_callback_number")) {
+          item.value = "UNKNOWN"
+        }
 
+        if (item.name.includes("short_description")) {
+          item.value = "-"
+        }
 
-const result = document.createElement("div")
-result.style.overflowY = "scroll"
-
-const searchUserButton = document.createElement("button")
-searchUserButton.innerHTML = "Search Users"
-searchUserButton.classList.toggle("user-button")
-searchUserButton.onclick = () => searchUsers()
-
-const fillButton = document.createElement("button")
-fillButton.innerHTML = "Test"
-fillButton.onclick = () => goThroughRequest()
-
-mainContainer.appendChild(input)
-mainContainer.appendChild(searchUserButton)
-mainContainer.appendChild(fillButton)
-mainContainer.appendChild(result)
-//document.body.prepend(mainContainer)
-
+      })
+    }, 1000)
+    stateValue = 1
 
 
-const style = document.createElement("style");
-style.textContent = `
-  * {
-    background: rgba(0,0,0,0.3) !important
+
+  } else if (window.location.href.includes("interaction")  && stateValue == 1 ) {
+    setTimeout(() => {
+          var allButtons = findAllItemsIncludingShadowRoots(document, "SPAN", "", "now-select-trigger-label")
+          var interactionType = allButtons[2]
+          var allInputs = findAllItemsIncludingShadowRoots(document, "INPUT", "", "now-input-native")
+          var ticketNumber = ""
+
+          allInputs.forEach(item => {
+            if (item.value.includes("Closed")) {
+              console.log(item)
+              console.log("Interaction is Already Closed")
+              stateValue = 0
+              return
+            }
+          })
+
+
+
+          allInputs.forEach(item => {
+            if (item.name == "number"){
+              ticketNumber = item.value
+            }
+          })
+
+
+          if (interactionType.outerText.includes("Incident - New")) {
+            console.log(transferedInteraction)
+            if (!transferedInteraction.includes(ticketNumber)){
+              transferedInteraction.push(ticketNumber)
+              allButtons = findAllItemsIncludingShadowRoots(document, "BUTTON", "" , "now-split-button-action -secondary -md")
+
+              allButtons.forEach(item => {
+                if (item.id.includes("action")){
+                  createIncidentButton = item
+                }
+              })
+              console.log(createIncidentButton)
+              createIncidentButton.click()
+            }
+          }
+          else if (interactionType.outerText.includes("Service Request - New")) {
+              if (!transferedInteraction.includes(ticketNumber)){
+                transferedInteraction.push(ticketNumber)
+                allButtons = findAllItemsIncludingShadowRoots(document, "BUTTON", "" , "now-split-button-trigger only-icon -secondary -md")
+
+              allButtons.forEach(item => {
+                if (item.id.includes("trigger")){
+                  item.click()
+                  setTimeout(() => {
+                    const div = findAllItemsIncludingShadowRoots(document, "DIV", "Create request", "now-dropdown-list-item is-focused is-select-none -md")
+                    console.log("Found", div)
+                      div[0].click()
+                  }, 500)
+
+                }
+              })
+            }
+          }
+          stateValue = 0
+          
+
+    }, 1000)
+
+
+
   }
-`;
-document.head.appendChild(style);
 
-// 1. Find the sn-caller-lookup custom element
+
+
+});
+
+observer.observe(document.body, {
+  childList: true,
+  subtree: true,
+});
+
+
 function findAllItemsIncludingShadowRoots(root = document, item = "INPUT", innerHTML, className) {
   const items = [];
 
-  function traverse(node) {
+function traverse(node) {
+  // Prevent traversing elements with display: none (computed style)
+  if (node instanceof Element) {
+    const computedStyle = getComputedStyle(node);
+    if (computedStyle.display === "none") {
+      return; // Skip this node and its children
+    }
+  }
 
-    if (innerHTML != "") {
-      if (className != ""){
-        if (node.tagName === item && node.innerHTML.includes(innerHTML) && node.className == className) {
-          items.push(node);
-        }
-      }else{
-        if (node.tagName === item && node.innerHTML.includes(innerHTML)) {
-          items.push(node);
-        }
+  // Matching logic
+  if (innerHTML !== "") {
+    if (className !== "") {
+      if (
+        node.tagName === item &&
+        node.innerHTML.includes(innerHTML) &&
+        node.className === className
+      ) {
+        items.push(node);
       }
-
-    }
-    else if (className != ""){
-        if (node.tagName === item && node.className.includes(className)) {
-          items.push(node);
-        }
-    }
-    else {
-      if (node.tagName === item) {
+    } else {
+      if (node.tagName === item && node.innerHTML.includes(innerHTML)) {
         items.push(node);
       }
     }
-
-
-
-    if (node.shadowRoot) {
-      traverse(node.shadowRoot);
-    }
-
-    node.childNodes.forEach(child => {
-      if (child.nodeType === Node.ELEMENT_NODE || child instanceof ShadowRoot) {
-        traverse(child);
-      }
-    });
-  }
-
-  traverse(root);
-  return items;
-}
-
-
-setTimeout(() => {
-  console.log('All resources including images, stylesheets, and scripts are loaded');
-  const allInputs = findAllItemsIncludingShadowRoots(document, "INPUT", "", "");
-  var allDivs = findAllItemsIncludingShadowRoots(document, "DIV", "", "now-input-field");
-
-  allDivs.forEach(item => {
-    item.style.height = "50px"
-    item.style.border = "none"
-            item.style.boxShadow = "0px 5px 5px rgba(0,0,0,0.3)"
-  })
-
-  allDivs = findAllItemsIncludingShadowRoots(document, "DIV", "", "now-typeahead-field");
-  allDivs.forEach(item => {
-     item.style.height = "50px"
-    item.style.border = "none"
-        item.style.boxShadow = "0px 5px 5px rgba(0,0,0,0.3)"
-  })
-
-  allDivs = findAllItemsIncludingShadowRoots(document, "BUTTON", "", "now-select-trigger");
-  allDivs.forEach(item => {
-     item.style.height = "50px"
-    item.style.border = "none"
-    item.style.boxShadow = "0px 5px 5px rgba(0,0,0,0.3)"
-  })
-
-
-  const allButtons = findAllItemsIncludingShadowRoots(document, "BUTTON", "");
-  const allbyclass = test(document, "SPAN", "now-select-trigger-label")
-
-  console.log(allButtons)
-
-  setTimeout(() => {
-    const div = findAllItemsIncludingShadowRoots(document, "DIV", innerHTML="Create request")
-    console.log(div)
-      div[0].click()
-  }, 500)
-
-
-},2500)
-
-
-function test(root = document, item = "INPUT", className = "") {
-  const items = [];
-
-  function traverse(node) {
-
-
-    if (node.outerText === "Save") {
+  } else if (className !== "") {
+    if (node.tagName === item && node.className.includes(className)) {
       items.push(node);
     }
-
-    if (node.shadowRoot) {
-      traverse(node.shadowRoot);
+  } else {
+    if (node.tagName === item) {
+      items.push(node);
     }
-
-    node.childNodes.forEach(child => {
-      if (child.nodeType === Node.ELEMENT_NODE || child instanceof ShadowRoot) {
-        traverse(child);
-      }
-    });
   }
 
+  // Traverse shadow root if it exists
+  if (node.shadowRoot) {
+    traverse(node.shadowRoot);
+  }
+
+  // Traverse children
+  node.childNodes.forEach((child) => {
+    if (child.nodeType === Node.ELEMENT_NODE || child instanceof ShadowRoot) {
+      traverse(child);
+    }
+  });
+}
   traverse(root);
   return items;
 }
+
 
 function goThroughRequest() {
 
@@ -192,82 +201,4 @@ async function searchUsers() {
 }
 
 
-function changeView() {
-    var allDivs = findAllItemsIncludingShadowRoots(document, "DIV", "", "now-input-field");
-
-  allDivs.forEach(item => {
-    if (item.children[1].required == true) {
-          item.style.background = "rgba(255,0,0,0.3)"
-    }
-    else {
-      item.style.background = "rgba(255,255,250,0.3)"
-    }
-
-    item.style.height = "50px"
-    item.style.border = "none"
-    item.style.borderRadius = "10px"
-    item.style.boxShadow = "0px 5px 5px rgba(0,0,0,0.3)"
-
-  })
-
-  allDivs = findAllItemsIncludingShadowRoots(document, "DIV", "", "now-typeahead-field");
-  allDivs.forEach(item => {
-    if (item.children[1].required == true) {
-      item.style.background = "rgba(255,0,0,0.3)"
-    }
-    else {
-      item.style.background = "rgba(255,255,250,0.3)"
-    }
-    item.style.height = "50px"
-    item.style.border = "none"
-    item.style.borderRadius = "10px"
-    item.style.boxShadow = "0px 5px 5px rgba(0,0,0,0.3)"
-
-  })
-
-  allDivs = findAllItemsIncludingShadowRoots(document, "BUTTON", "", "now-select-trigger");
-  allDivs.forEach(item => {
-    if (item.children[1].required == true) {
-      item.style.background = "rgba(255,0,0,0.3)"
-    }
-    else {
-      item.style.background = "rgba(255,255,250,0.3)"
-    }
-    item.style.height = "50px"
-    item.style.border = "none"
-    item.style.borderRadius = "10px"
-    item.style.boxShadow = "0px 5px 5px rgba(0,0,0,0.3)"
-  })
-
-
-    
-
-    allDivs = findAllItemsIncludingShadowRoots(document, "DIV", "", "now-textarea-container");
-  allDivs.forEach(item => {
-     item.style.height = "200px"
-    item.style.border = "none"
-    item.style.borderRadius = "20px"
-    item.style.overflow = "hidden"
-    item.style.boxShadow = "0px 5px 5px rgba(0,0,0,0.3)"
-  })
-  
-  
-  
-
-
-
-  console.log(allDivs)
-}
-
-
-
-
-const observer = new MutationObserver(() => {
-  changeView(); // re-apply styles when content changes
-});
-
-observer.observe(document.body, {
-  childList: true,
-  subtree: true,
-});
 
