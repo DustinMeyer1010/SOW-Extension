@@ -1,34 +1,49 @@
-console.log("This runs in every page!");
-document.body.style.border = "5px solid blue";
+document.body.style.border = "5px solid red";
 
 var transferedInteraction = []
 
 stateValue = 0
+var AssignedToField
+
 
 const observer = new MutationObserver(() => {
   console.log(window.location.href, stateValue, transferedInteraction)
   if (window.location.href.includes("interaction/-1")){
     setTimeout(() => {
       const allInputs = findAllItemsIncludingShadowRoots(document, "INPUT", "", "");
+      var allButtons = findAllItemsIncludingShadowRoots(document, "BUTTON", "", "now-button -tertiary -sm is-bare only-icon")
+      var selected = false
 
-      allInputs.forEach(item => {
-        if (item.name.includes("assigned_to_input")) {
-          item.value = "32953114"
+      allButtons.forEach(icon => {
+        if (icon.getAttribute('aria-description').includes("Assigned") && icon.getAttribute("aria-label").includes("Open")) {
+          selected = true
+          AssignedToField.blur()
         }
-        if (item.name.includes("u_callback_number")) {
-          item.value = "UNKNOWN"
-        }
-
-        if (item.name.includes("short_description")) {
-          item.value = "-"
-        }
-
       })
-    }, 1000)
+      if (!selected) {
+          allInputs.forEach(item => {
+            if (item.name.includes("assigned_to_input")) {
+              item.value = "32953114"
+                item.click()
+                var div = findAllItemsIncludingShadowRoots(document, "LI", "", "now-dropdown-list-item is-multi-line -md")
+                div.forEach(li => {
+                  if (li.outerText.includes("32953114")) {
+                    AssignedToField = item
+                    li.click()
+                  }
+                })
+
+          }
+          if (item.name.includes("u_callback_number") && item.value == "") {
+            item.value = "UNKNOWN"
+          }
+
+        })
+      }
+
+
+      }, 500)
     stateValue = 1
-
-
-
   } else if (window.location.href.includes("interaction")  && stateValue == 1 ) {
     setTimeout(() => {
           var allButtons = findAllItemsIncludingShadowRoots(document, "SPAN", "", "now-select-trigger-label")
@@ -61,7 +76,7 @@ const observer = new MutationObserver(() => {
               allButtons = findAllItemsIncludingShadowRoots(document, "BUTTON", "" , "now-split-button-action -secondary -md")
 
               allButtons.forEach(item => {
-                if (item.id.includes("action")){
+                if (item.id.includes("action") && item.outerText.includes("Create incident")){
                   createIncidentButton = item
                 }
               })
@@ -75,7 +90,7 @@ const observer = new MutationObserver(() => {
                 allButtons = findAllItemsIncludingShadowRoots(document, "BUTTON", "" , "now-split-button-trigger only-icon -secondary -md")
 
               allButtons.forEach(item => {
-                if (item.id.includes("trigger")){
+                if (item.id.includes("trigger") && item.getAttribute('aria-label').includes("Create incident - More Actions")){
                   item.click()
                   setTimeout(() => {
                     const div = findAllItemsIncludingShadowRoots(document, "DIV", "Create request", "now-dropdown-list-item is-focused is-select-none -md")
@@ -91,12 +106,7 @@ const observer = new MutationObserver(() => {
           
 
     }, 1000)
-
-
-
   }
-
-
 
 });
 
@@ -187,7 +197,6 @@ async function searchUsers() {
   await fetch(`http://localhost:8080/search/users/URMC-sh/${inputValue}`)
   .then(response => response.json())
   .then(data => {
-    
     data.forEach(item => {
       split = item.name.split(", ")
       item.name = split[1] + " " + split[0]

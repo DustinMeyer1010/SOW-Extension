@@ -17,7 +17,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://urmcsand.service-now.com/*"],
+      "matches": ["https://urmcprod.service-now.com/*"],
       "js": ["content.js"],
       "css": ["styles.css"]
     }
